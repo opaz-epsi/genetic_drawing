@@ -1,4 +1,7 @@
 function DrawingDNA() {
+  var MUTATIONS_COUNT = 10;
+  var shapesCount = 4;
+
   var shapes = [];
 
   function getShapes() {
@@ -8,31 +11,26 @@ function DrawingDNA() {
   function setShapes(values) {
     shapes = [];
     _.each(values, function(shape) {
-      shapes.push(cloneShape(shape));
+      shapes.push(shape.clone());
     });
   }
 
   function randomize() {
-    _.times(300, function() {
-      shapes.push({
-        x:      Math.random(),
-        y:      Math.random(),
-        radius: Math.random(),
-        r:      _.random(0,255),
-        g:      _.random(0,255),
-        b:      _.random(0,255),
-        a:      Math.random()
-      });
+    _.times(shapesCount, function() {
+      shapes.push(new Circle());
     });
   }
 
   function mutate() {
-    _.times(50, function() {
-      var randIndex = _.random(0, shapes.length-1);
-      var shape = shapes[randIndex];
-      var shapeKeys = Object.keys(shape);
-      var randKey = shapeKeys[_.random(0, shapeKeys.length)];
-      shape[randKey] *= 1+ Math.random() * 0.8 - 0.4;
+    var randIndex = _.random(0, shapes.length);
+    _.times(MUTATIONS_COUNT, function() {
+      if(randIndex === shapes.length) {
+        shapesCount+=1;
+        shapes.push(new Circle());
+        randIndex = _.random(0, shapes.length);
+      } else {
+        shapes[randIndex].randomizeRandomKey();
+      }
     });
   }
 
@@ -40,7 +38,10 @@ function DrawingDNA() {
     var crossedShapes = drawingDNA.getShapes();    
     for(var i = 0; i < crossedShapes.length; i++) {
       if(Math.random() <= 0.5) {
-        shapes[i] = cloneShape(crossedShapes[i]);
+        var crossedShape = crossedShapes[i];
+        if(crossedShape) {
+          shapes[i] = crossedShape.clone();
+        } 
       }
     }
   }
@@ -51,10 +52,11 @@ function DrawingDNA() {
     return cloned;
   }
 
-  function cloneShape(shape) { 
-    var cloned = {};
-    for(var k in shape) { cloned[k]=shape[k]; } 
-    return cloned;
+  function render(canvas) {
+    get2d(canvas).clearRect ( 0, 0, canvas.width, canvas.height);
+    _.each(shapes, function(shape) {
+      shape.draw(canvas);
+    });  
   }
 
   return Object.create({
@@ -63,6 +65,7 @@ function DrawingDNA() {
     setShapes: setShapes,
     mutate: mutate,
     crossOver: crossOver,
-    clone: clone
+    clone: clone,
+    render: render
   });
 }

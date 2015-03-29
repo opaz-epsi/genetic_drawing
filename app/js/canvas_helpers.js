@@ -31,19 +31,44 @@ function loadTenplateImage(imagePath) {
   };
 }
 
-function drawCircle(canvas, x, y, radius, r, g, b, a) {
-  var ctx = get2d(canvas);
-  ctx.beginPath();
-  ctx.fillStyle = "rgba("+r+","+g+","+b+","+a+")";
-  ctx.strokeStyle = ctx.fillStyle; 
-  ctx.arc(
-      x*canvas.width,
-      y*canvas.height,
-      radius*canvas.width/2,
-      0,2*Math.PI
-  );
-  ctx.fill();
-  ctx.stroke();
+function rgb2hsv () {
+  var rr, gg, bb,
+  r = arguments[0] / 255,
+  g = arguments[1] / 255,
+    b = arguments[2] / 255,
+    h, s,
+      v = Math.max(r, g, b),
+      diff = v - Math.min(r, g, b),
+        diffc = function(c){
+          return (v - c) / 6 / diff + 1 / 2;
+        };
+
+  if (diff === 0) {
+    h = s = 0;
+  } else {
+    s = diff / v;
+    rr = diffc(r);
+    gg = diffc(g);
+    bb = diffc(b);
+
+    if (r === v) {
+      h = bb - gg;
+    }else if (g === v) {
+      h = (1 / 3) + rr - bb;
+    }else if (b === v) {
+      h = (2 / 3) + gg - rr;
+    }
+    if (h < 0) {
+      h += 1;
+    }else if (h > 1) {
+      h -= 1;
+    }
+  }
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    v: Math.round(v * 100)
+  };
 }
 
 function matchingScore(canvas1, canvas2) {
@@ -53,11 +78,17 @@ function matchingScore(canvas1, canvas2) {
 
   var score = 0;
   for(var i = 0; i < p1.length; i+=4) {
-    var dist = (p1[i] - p2[i]) * (p1[i] - p2[i]) +
+    hsv1 = rgb2hsv(p1[i], p1[i+1], p1[i+2]);
+    hsv2 = rgb2hsv(p2[i], p2[i+1], p2[i+2]);
+    var dist = (hsv1.h - hsv2.h) *  (hsv1.h - hsv2.h) +
+      (hsv1.s - hsv2.s) *  (hsv1.s - hsv2.s) +
+      (hsv1.v - hsv2.v) *  (hsv1.v - hsv2.v);
+
+    dist += (p1[i] - p2[i]) * (p1[i] - p2[i]) +
       (p1[i+1] - p2[i+1]) * (p1[i+1] - p2[i+1]) +
-      (p1[i+2] - p2[i+2]) * (p1[i+2] - p2[i+2]) +
-      (p1[i+3] - p2[i+3]) * (p1[i+3] - p2[i+3]);
+      (p1[i+2] - p2[i+2]) * (p1[i+2] - p2[i+2]); 
     score += dist;
   }
   return score;
 }
+
